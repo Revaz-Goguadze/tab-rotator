@@ -1,8 +1,11 @@
 const rotationAlarmName = "rotateTabs";
 let isPaused = false;
 
+// Firefox compatibility: Use browser instead of chrome
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 function updateIcon(isActive) {
-  chrome.action.setIcon({
+  browserAPI.browserAction.setIcon({
     path: {
       16: "icons/logo.png",
       32: "icons/logo.png",
@@ -13,8 +16,8 @@ function updateIcon(isActive) {
 }
 
 function rotateTab(direction = "next") {
-  chrome.tabs.query({ currentWindow: true }, (tabs) => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
+  browserAPI.tabs.query({ currentWindow: true }, (tabs) => {
+    browserAPI.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
       if (activeTabs.length === 0) return;
       let activeTab = activeTabs[0];
       let currentIndex = activeTab.index;
@@ -23,20 +26,20 @@ function rotateTab(direction = "next") {
         : (currentIndex - 1 + tabs.length) % tabs.length;
       let nextTab = tabs.find(tab => tab.index === nextIndex);
       if (nextTab) {
-        chrome.tabs.update(nextTab.id, { active: true });
+        browserAPI.tabs.update(nextTab.id, { active: true });
       }
     });
   });
 }
 
-chrome.alarms.onAlarm.addListener((alarm) => {
+browserAPI.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === rotationAlarmName && !isPaused) {
     rotateTab("next");
   }
 });
 
 // Add keyboard shortcut listeners
-chrome.commands.onCommand.addListener((command) => {
+browserAPI.commands.onCommand.addListener((command) => {
   switch (command) {
     case "rotate-next":
       rotateTab("next");
@@ -53,12 +56,12 @@ chrome.commands.onCommand.addListener((command) => {
 
 function startRotation(intervalSec) {
   isPaused = false;
-  chrome.alarms.create(rotationAlarmName, { periodInMinutes: intervalSec / 60 });
+  browserAPI.alarms.create(rotationAlarmName, { periodInMinutes: intervalSec / 60 });
   updateIcon(true);
   return `Rotating every ${intervalSec.toFixed(1)} seconds`;
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch(message.command) {
     case "startRotation":
       isPaused = false;
@@ -66,7 +69,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ status: startRotation(intervalSec) });
       break;
     case "stopRotation":
-      chrome.alarms.clear(rotationAlarmName);
+      browserAPI.alarms.clear(rotationAlarmName);
       isPaused = false;
       updateIcon(false);
       sendResponse({ status: "Rotation stopped" });
@@ -77,7 +80,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ status: "Rotation paused" });
       break;
     case "resumeRotation":
-      chrome.storage.local.get(['rotationInterval'], (result) => {
+      browserAPI.storage.local.get(['rotationInterval'], (result) => {
         const interval = result.rotationInterval || 5; // default to 5 seconds
         sendResponse({ status: startRotation(interval) });
       });
@@ -87,7 +90,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ status: "Manual rotation" });
       break;
     case "updateKeybinds":
-      chrome.storage.local.set({ keybinds: message.keybinds });
+      browserAPI.storage.local.set({ keybinds: message.keybinds });
       sendResponse({ status: "Keybinds updated" });
       break;
   }
@@ -95,7 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Initialize state and restore rotation if it was active
-chrome.storage.local.get(['wasRotating', 'rotationInterval'], (result) => {
+browserAPI.storage.local.get(['wasRotating', 'rotationInterval'], (result) => {
   if (result.wasRotating) {
     startRotation(result.rotationInterval || 5);
   }
@@ -103,16 +106,16 @@ chrome.storage.local.get(['wasRotating', 'rotationInterval'], (result) => {
 });
 
 // Store rotation state when extension is suspended/closed
-chrome.runtime.onSuspend.addListener(() => {
-  chrome.alarms.get(rotationAlarmName, (alarm) => {
-    chrome.storage.local.set({ wasRotating: alarm !== null && !isPaused });
+browserAPI.runtime.onSuspend?.addListener(() => {
+  browserAPI.alarms.get(rotationAlarmName, (alarm) => {
+    browserAPI.storage.local.set({ wasRotating: alarm !== null && !isPaused });
   });
 });
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(['keybinds'], (result) => {
+browserAPI.runtime.onInstalled.addListener(() => {
+  browserAPI.storage.local.get(['keybinds'], (result) => {
     if (!result.keybinds) {
-      chrome.storage.local.set({
+      browserAPI.storage.local.set({
         keybinds: {
           'rotate-next': 'Alt+N',
           'rotate-prev': 'Alt+P',

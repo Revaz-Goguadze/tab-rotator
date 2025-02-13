@@ -1,39 +1,41 @@
 let isPaused = false;
 
+// Firefox compatibility: Use browser instead of chrome
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 document.addEventListener('DOMContentLoaded', () => {
   const keybinds = document.getElementById('keybinds');
   keybinds.classList.add('show');
   document.getElementById('status').textContent = 'Press "/" to toggle keybinds';
   
-  // Load saved interval
-  chrome.storage.local.get(['rotationInterval'], (result) => {
+  browserAPI.storage.local.get(['rotationInterval'], (result) => {
     if (result.rotationInterval) {
       document.getElementById('interval').value = result.rotationInterval;
     }
-th  });
+  });
 });
 
 document.addEventListener('keydown', (e) => {
   if (e.key === '/') {
-    e.preventDefault(); // Prevent "/" from being typed in input
+    e.preventDefault();
     const keybinds = document.getElementById('keybinds');
     keybinds.classList.toggle('show');
   }
-});h
+});
 
 document.getElementById('prev').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ command: "rotateManual", direction: "prev" });
+  browserAPI.runtime.sendMessage({ command: "rotateManual", direction: "prev" });
 });
 
 document.getElementById('next').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ command: "rotateManual", direction: "next" });
+  browserAPI.runtime.sendMessage({ command: "rotateManual", direction: "next" });
 });
 
 document.getElementById('pause').addEventListener('click', () => {
   isPaused = !isPaused;
   const btn = document.getElementById('pause');
   btn.textContent = isPaused ? "▶️ Resume" : "⏸️ Pause";
-  chrome.runtime.sendMessage({ 
+  browserAPI.runtime.sendMessage({ 
     command: isPaused ? "pauseRotation" : "resumeRotation" 
   }, response => {
     document.getElementById('status').textContent = response.status;
@@ -47,10 +49,9 @@ document.getElementById('start').addEventListener('click', () => {
     return;
   }
   
-  // Save interval to storage
-  chrome.storage.local.set({ rotationInterval: intervalSec });
+  browserAPI.storage.local.set({ rotationInterval: intervalSec });
   
-  chrome.runtime.sendMessage(
+  browserAPI.runtime.sendMessage(
     { command: "startRotation", interval: intervalSec },
     response => {
       document.getElementById('status').textContent = response.status;
@@ -59,7 +60,7 @@ document.getElementById('start').addEventListener('click', () => {
 });
 
 document.getElementById('stop').addEventListener('click', () => {
-  chrome.runtime.sendMessage(
+  browserAPI.runtime.sendMessage(
     { command: "stopRotation" },
     response => {
       document.getElementById('status').textContent = response.status;
