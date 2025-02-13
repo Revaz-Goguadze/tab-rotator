@@ -1,0 +1,46 @@
+{
+    "manifest_version": 3,
+    "name": "Tab Rotator",
+    "version": "1.0",
+    "description": "Automatically rotates through open tabs every N seconds.",
+    "permissions": ["tabs", "alarms", "storage"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "icons/logo.png",
+        "32": "icons/logo.png",
+        "48": "icons/logo.png",
+        "128": "icons/logo.png"
+      }
+    },
+    "icons": {
+      "16": "icons/logo.png",
+      "32": "icons/logo.png",
+      "48": "icons/logo.png",
+      "128": "icons/logo.png"
+    },
+    "commands": {
+      "rotate-next": {
+        "suggested_key": {
+          "default": "Alt+N"
+        },
+        "description": "Rotate to next tab"
+      },
+      "rotate-prev": {
+        "suggested_key": {
+          "default": "Alt+P"
+        },
+        "description": "Rotate to previous tab"
+      },
+      "toggle-pause": {
+        "suggested_key": {
+          "default": "Alt+Space"
+        },
+        "description": "Toggle rotation pause"
+      }
+    }
+}
+  
