@@ -47,18 +47,51 @@ browserAPI.alarms.onAlarm.addListener((alarm) => {
 
 // Add keyboard shortcut listeners
 browserAPI.commands.onCommand.addListener((command) => {
-  switch (command) {
-    case "rotate-next":
-      rotateTab("next");
-      break;
-    case "rotate-prev":
-      rotateTab("prev");
-      break;
-    case "toggle-pause":
-      isPaused = !isPaused;
-      updateIcon(!isPaused);
-      break;
-  }
+  browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length === 0) return;
+    const currentWindowId = tabs[0].windowId;
+    
+    switch (command) {
+      case "rotate-next":
+        // Add current window to rotation if not already active
+        activeRotationWindows.add(currentWindowId);
+        // Manual rotation for current window
+        browserAPI.tabs.query({ windowId: currentWindowId }, (windowTabs) => {
+          browserAPI.tabs.query({ active: true, windowId: currentWindowId }, (activeTabs) => {
+            if (activeTabs.length === 0) return;
+            let activeTab = activeTabs[0];
+            let currentIndex = activeTab.index;
+            let nextIndex = (currentIndex + 1) % windowTabs.length;
+            let nextTab = windowTabs.find(tab => tab.index === nextIndex);
+            if (nextTab) {
+              browserAPI.tabs.update(nextTab.id, { active: true });
+            }
+          });
+        });
+        break;
+      case "rotate-prev":
+        // Add current window to rotation if not already active
+        activeRotationWindows.add(currentWindowId);
+        // Manual rotation for current window
+        browserAPI.tabs.query({ windowId: currentWindowId }, (windowTabs) => {
+          browserAPI.tabs.query({ active: true, windowId: currentWindowId }, (activeTabs) => {
+            if (activeTabs.length === 0) return;
+            let activeTab = activeTabs[0];
+            let currentIndex = activeTab.index;
+            let nextIndex = (currentIndex - 1 + windowTabs.length) % windowTabs.length;
+            let nextTab = windowTabs.find(tab => tab.index === nextIndex);
+            if (nextTab) {
+              browserAPI.tabs.update(nextTab.id, { active: true });
+            }
+          });
+        });
+        break;
+      case "toggle-pause":
+        isPaused = !isPaused;
+        updateIcon(!isPaused);
+        break;
+    }
+  });
 });
 
 function startRotation(intervalSec) {
@@ -117,6 +150,13 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "startRotation":
       isPaused = false;
       const intervalSec = parseFloat(message.interval);
+      if (message.windowId) {
+        activeRotationWindows.add(message.windowId);
+        browserAPI.storage.local.set({
+          activeRotationWindows: Array.from(activeRotationWindows),
+          rotationInterval: intervalSec
+        });
+      }
       const status = startRotation(intervalSec);
       sendResponse({ status });
       break;
@@ -140,7 +180,25 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       break;
     case "rotateManual":
-      rotateTab(message.direction);
+      if (message.windowId) {
+        // Manual rotation for specific window
+        browserAPI.tabs.query({ windowId: message.windowId }, (tabs) => {
+          browserAPI.tabs.query({ active: true, windowId: message.windowId }, (activeTabs) => {
+            if (activeTabs.length === 0) return;
+            let activeTab = activeTabs[0];
+            let currentIndex = activeTab.index;
+            let nextIndex = message.direction === "next"
+              ? (currentIndex + 1) % tabs.length
+              : (currentIndex - 1 + tabs.length) % tabs.length;
+            let nextTab = tabs.find(tab => tab.index === nextIndex);
+            if (nextTab) {
+              browserAPI.tabs.update(nextTab.id, { active: true });
+            }
+          });
+        });
+      } else {
+        rotateTab(message.direction);
+      }
       sendResponse({ status: "Manual rotation" });
       break;
     case "updateKeybinds":

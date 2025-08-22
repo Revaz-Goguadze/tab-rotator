@@ -24,11 +24,27 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('prev').addEventListener('click', () => {
-  browserAPI.runtime.sendMessage({ command: "rotateManual", direction: "prev" });
+  browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      browserAPI.runtime.sendMessage({ 
+        command: "rotateManual", 
+        direction: "prev",
+        windowId: tabs[0].windowId
+      });
+    }
+  });
 });
 
 document.getElementById('next').addEventListener('click', () => {
-  browserAPI.runtime.sendMessage({ command: "rotateManual", direction: "next" });
+  browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      browserAPI.runtime.sendMessage({ 
+        command: "rotateManual", 
+        direction: "next",
+        windowId: tabs[0].windowId
+      });
+    }
+  });
 });
 
 document.getElementById('pause').addEventListener('click', () => {
@@ -51,12 +67,20 @@ document.getElementById('start').addEventListener('click', () => {
   
   browserAPI.storage.local.set({ rotationInterval: intervalSec });
   
-  browserAPI.runtime.sendMessage(
-    { command: "startRotation", interval: intervalSec },
-    response => {
-      document.getElementById('status').textContent = response.status;
+  browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      browserAPI.runtime.sendMessage(
+        { 
+          command: "startRotation", 
+          interval: intervalSec,
+          windowId: tabs[0].windowId
+        },
+        response => {
+          document.getElementById('status').textContent = response.status;
+        }
+      );
     }
-  );
+  });
 });
 
 document.getElementById('stop').addEventListener('click', () => {
