@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.rotationInterval) {
       document.getElementById('interval').value = result.rotationInterval;
     }
-th  });
+  });
 });
 
 document.addEventListener('keydown', (e) => {
@@ -19,14 +19,30 @@ document.addEventListener('keydown', (e) => {
     const keybinds = document.getElementById('keybinds');
     keybinds.classList.toggle('show');
   }
-});h
+});
 
 document.getElementById('prev').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ command: "rotateManual", direction: "prev" });
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      chrome.runtime.sendMessage({ 
+        command: "rotateManual", 
+        direction: "prev",
+        windowId: tabs[0].windowId
+      });
+    }
+  });
 });
 
 document.getElementById('next').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ command: "rotateManual", direction: "next" });
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      chrome.runtime.sendMessage({ 
+        command: "rotateManual", 
+        direction: "next",
+        windowId: tabs[0].windowId
+      });
+    }
+  });
 });
 
 document.getElementById('pause').addEventListener('click', () => {
@@ -50,12 +66,20 @@ document.getElementById('start').addEventListener('click', () => {
   // Save interval to storage
   chrome.storage.local.set({ rotationInterval: intervalSec });
   
-  chrome.runtime.sendMessage(
-    { command: "startRotation", interval: intervalSec },
-    response => {
-      document.getElementById('status').textContent = response.status;
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      chrome.runtime.sendMessage(
+        { 
+          command: "startRotation", 
+          interval: intervalSec,
+          windowId: tabs[0].windowId
+        },
+        response => {
+          document.getElementById('status').textContent = response.status;
+        }
+      );
     }
-  );
+  });
 });
 
 document.getElementById('stop').addEventListener('click', () => {
