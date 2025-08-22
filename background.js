@@ -1,3 +1,6 @@
+// Firefox Manifest V2 Background Script
+console.log('Tab Rotator background script loading...');
+
 const rotationAlarmName = "rotateTabs";
 let isPaused = false;
 let activeRotationWindows = new Set(); // Track windows with active rotation
