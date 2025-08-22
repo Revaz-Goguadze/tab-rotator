@@ -6,10 +6,10 @@ A lightweight and easy-to-use browser extension that **automatically cycles thro
 
 ## Supported Browsers
 
-- **Google Chrome** (Manifest V2)
-- **Mozilla Firefox**
+- **Google Chrome** (Manifest V3) - Use `manifest.json` and `background.js`
+- **Mozilla Firefox** (Manifest V2) - Use `manifest-firefox.json` and `background-firefox.js`
 
-The extension uses the [`browser` vs `chrome` API compatibility shim](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Chrome_incompatibilities) to work smoothly on both browsers.
+The extension provides separate versions optimized for each browser's extension architecture.
 
 ---
 
@@ -71,15 +71,17 @@ The extension uses the [`browser` vs `chrome` API compatibility shim](https://de
 2. Visit `chrome://extensions/`
 3. Enable **Developer mode**.
 4. Click **Load unpacked** and select the project folder.
-5. Pin **Tab Rotator** icon for easy access.
+5. Ensure `manifest.json` and `background.js` are used (default files).
+6. Pin **Tab Rotator** icon for easy access.
 
 ### Firefox
 
 1. Download or clone this repository.
-2. Visit `about:debugging#/runtime/this-firefox`
-3. Click **Load Temporary Add-on**.
-4. Select the `manifest.json` from the project folder.
-5. (Optional) Package and sign for full addon install.
+2. Rename `manifest-firefox.json` to `manifest.json` and `background-firefox.js` to `background.js`
+3. Visit `about:debugging#/runtime/this-firefox`
+4. Click **Load Temporary Add-on**.
+5. Select the `manifest.json` from the project folder.
+6. (Optional) Package and sign for full addon install.
 
 ---
 
