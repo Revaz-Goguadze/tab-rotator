@@ -1,43 +1,18 @@
 let isPaused = false;
 
-// Browser compatibility: Use browser API or chrome API with error handling
-const browserAPI = (() => {
-  if (typeof browser !== 'undefined' && browser.runtime) {
-    return browser;
-  } else if (typeof chrome !== 'undefined' && chrome.runtime) {
-    return chrome;
-  } else {
-    console.error('No browser API available');
-    return null;
-  }
-})();
-
-// Windows compatibility: Add error handling wrapper
-function safeAPICall(apiCall, errorMessage = 'API call failed') {
-  try {
-    if (!browserAPI) {
-      console.error('Browser API not available');
-      return;
-    }
-    return apiCall();
-  } catch (error) {
-    console.error(errorMessage, error);
-    document.getElementById('status').textContent = 'Error: ' + errorMessage;
-  }
-}
+// Simple browser API compatibility
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 document.addEventListener('DOMContentLoaded', () => {
   const keybinds = document.getElementById('keybinds');
   keybinds.classList.add('show');
   document.getElementById('status').textContent = 'Press "/" to toggle keybinds';
   
-  safeAPICall(() => {
-    browserAPI.storage.local.get(['rotationInterval'], (result) => {
-      if (result.rotationInterval) {
-        document.getElementById('interval').value = result.rotationInterval;
-      }
-    });
-  }, 'Failed to load settings');
+  browserAPI.storage.local.get(['rotationInterval'], (result) => {
+    if (result.rotationInterval) {
+      document.getElementById('interval').value = result.rotationInterval;
+    }
+  });
 });
 
 document.addEventListener('keydown', (e) => {
@@ -49,31 +24,27 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('prev').addEventListener('click', () => {
-  safeAPICall(() => {
-    browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs.length > 0) {
-        browserAPI.runtime.sendMessage({ 
-          command: "rotateManual", 
-          direction: "prev",
-          windowId: tabs[0].windowId
-        });
-      }
-    });
-  }, 'Failed to rotate to previous tab');
+  browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      browserAPI.runtime.sendMessage({ 
+        command: "rotateManual", 
+        direction: "prev",
+        windowId: tabs[0].windowId
+      });
+    }
+  });
 });
 
 document.getElementById('next').addEventListener('click', () => {
-  safeAPICall(() => {
-    browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs.length > 0) {
-        browserAPI.runtime.sendMessage({ 
-          command: "rotateManual", 
-          direction: "next",
-          windowId: tabs[0].windowId
-        });
-      }
-    });
-  }, 'Failed to rotate to next tab');
+  browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      browserAPI.runtime.sendMessage({ 
+        command: "rotateManual", 
+        direction: "next",
+        windowId: tabs[0].windowId
+      });
+    }
+  });
 });
 
 document.getElementById('pause').addEventListener('click', () => {
@@ -81,13 +52,13 @@ document.getElementById('pause').addEventListener('click', () => {
   const btn = document.getElementById('pause');
   btn.textContent = isPaused ? "▶️ Resume" : "⏸️ Pause";
   
-  safeAPICall(() => {
-    browserAPI.runtime.sendMessage({ 
-      command: isPaused ? "pauseRotation" : "resumeRotation" 
-    }, response => {
+  browserAPI.runtime.sendMessage({ 
+    command: isPaused ? "pauseRotation" : "resumeRotation" 
+  }, response => {
+    if (response) {
       document.getElementById('status').textContent = response.status;
-    });
-  }, 'Failed to pause/resume rotation');
+    }
+  });
 });
 
 document.getElementById('start').addEventListener('click', () => {
@@ -97,36 +68,34 @@ document.getElementById('start').addEventListener('click', () => {
     return;
   }
   
-  safeAPICall(() => {
-    browserAPI.storage.local.set({ rotationInterval: intervalSec });
-  }, 'Failed to save interval');
+  browserAPI.storage.local.set({ rotationInterval: intervalSec });
   
-  safeAPICall(() => {
-    browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs.length > 0) {
-        browserAPI.runtime.sendMessage(
-          { 
-            command: "startRotation", 
-            interval: intervalSec,
-            windowId: tabs[0].windowId
-          },
-          response => {
+  browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs.length > 0) {
+      browserAPI.runtime.sendMessage(
+        { 
+          command: "startRotation", 
+          interval: intervalSec,
+          windowId: tabs[0].windowId
+        },
+        response => {
+          if (response) {
             document.getElementById('status').textContent = response.status;
           }
-        );
-      }
-    });
-  }, 'Failed to start rotation');
+        }
+      );
+    }
+  });
 });
 
 document.getElementById('stop').addEventListener('click', () => {
-  safeAPICall(() => {
-    browserAPI.runtime.sendMessage(
-      { command: "stopRotation" },
-      response => {
+  browserAPI.runtime.sendMessage(
+    { command: "stopRotation" },
+    response => {
+      if (response) {
         document.getElementById('status').textContent = response.status;
       }
-    );
-  }, 'Failed to stop rotation');
+    }
+  );
 });
   
